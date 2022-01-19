@@ -1,0 +1,8 @@
+#output file
+run.exe
+
+#objects
+objects/*
+
+#vscode files
+.vscode/*
