@@ -17,19 +17,15 @@ int main(int argc, char* argv[])
         png_chunk_t chunk;
 
         uint32_t to_end = file_size;
-        uint8_t prev = data_ptr;
         while ((data_ptr = goto_next_chunk(data_ptr, to_end)) != NULL)
         {
-
-            if(prev == data_ptr)
-                data_ptr ++;
-            prev = data_ptr;
-            
             if(read_chunk(data_ptr, &chunk, to_end))
             {
                 printf("%.*s\n", 4, chunk.chunk_type.bytes);
                 printf("size: %i\n", chunk.lengh.val);
                 data_ptr += chunk.lengh.val + 12;
+
+                free_chunk(&chunk);
             }
             to_end = file_size - (data_ptr - file_data);
         } 

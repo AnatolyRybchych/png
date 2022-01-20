@@ -24,9 +24,8 @@ void *goto_next_chunk(void *data_ptr, uint32_t bytes_to_buffer_end)
     uint8_t *ptr = (uint8_t*)data_ptr;
     uint8_t *end = (uint8_t*)(ptr + bytes_to_buffer_end);
 
-    while (ptr != end)
+    while (ptr + PNG_CHUNK_NO_DATA_SIZE  <= end)
     {
-        static int it = 0;
         chunk_type type = {
             .bytes = {
                 [0] = *(ptr + 4),
