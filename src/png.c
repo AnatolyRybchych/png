@@ -227,6 +227,104 @@ static void png_filter_peath(void *src, void *prev_src, uint32_t src_size, uint8
     if(prev_src == NULL) free(prev_sub_prev);
 }
 
+static void png_reverse_filter_sub(void *src, void *prev_src, uint32_t src_size, uint8_t bpp)
+{
+    uint8_t *src_end = (uint8_t*)src + src_size;
+
+    uint8_t *dst = (uint8_t*)malloc(src_size);
+
+    //out of range src
+    for(uint8_t *ptr = src, *dst_ptr = dst; dst_ptr < dst + bpp; ++dst_ptr, ++ptr)
+        *dst_ptr = *ptr - 0;
+
+    for(uint8_t *ptr = (uint8_t*)src + bpp, *dst_ptr = dst + bpp; ptr != src_end; ++ptr, ++dst_ptr)
+    {
+        *dst_ptr = *ptr + *(ptr - bpp); 
+    }
+
+    memcpy(src, dst, src_size);
+    free(dst);
+}
+
+static void png_reverse_filter_up(void *src, void *prev_src, uint32_t src_size, uint8_t bpp)
+{
+    if(prev_src == NULL) return;
+
+    uint8_t *src_end = (uint8_t*)src + src_size;
+
+    for(uint8_t *ptr = src, *prev_ptr = prev_src; ptr != src_end; ++prev_ptr, ++ptr)
+        *ptr = *ptr + *prev_ptr;
+}
+
+static void png_reverse_filter_average(void *src, void *prev_src, uint32_t src_size, uint8_t bpp)
+{
+    uint8_t *src_end = (uint8_t*)src + src_size;
+
+    uint8_t *sub = (uint8_t*)malloc(src_size);
+    uint8_t *prev = (uint8_t*)malloc(src_size);
+
+    memcpy(sub, src, src_size);
+    memcpy(prev, src, src_size);
+
+    png_filter_sub(sub, prev_src, src_size, bpp);
+    png_filter_up(prev, prev_src, src_size, bpp);
+
+    for(uint8_t *ptr = src, *sub_ptr = sub, *prev_ptr = prev;
+        ptr != src_end;
+        ++ptr, ++sub_ptr, ++prev_ptr)
+        {
+            *ptr = *ptr + (uint8_t)floor(((double)*sub + (double)*prev) / 2);
+        }
+
+    free(sub);
+    free(prev);
+}
+
+//https://www.w3.org/TR/PNG-Filters.html 6.6
+static void png_reverse_filter_peath(void *src, void *prev_src, uint32_t src_size, uint8_t bpp)
+{
+    uint8_t *src_end = (uint8_t*)src + src_size;
+
+    uint8_t *sub = (uint8_t*)malloc(src_size);      //a arr
+    uint8_t *prev = (uint8_t*)malloc(src_size);     //b arr
+    uint8_t *prev_sub = (uint8_t*)malloc(src_size); //c arr
+    uint8_t *prev_sub_prev = NULL;
+
+    memcpy(sub, src, src_size);
+    memcpy(prev, src, src_size);
+    memcpy(prev_sub, src, src_size);
+    if(prev_src == NULL)
+    {
+        prev_sub_prev = (uint8_t*)malloc(src_size);
+        memcpy(prev_sub_prev + bpp, prev_src, src_size - bpp);
+        memset(prev_sub_prev, 0, bpp);
+    }
+
+    png_filter_sub(sub, prev_src, src_size, bpp);
+    png_filter_up(prev, prev_src, src_size, bpp);
+    png_filter_up(prev_sub, prev_sub_prev, src_size, bpp);
+
+    for(uint8_t *ptr = src, *a_ptr = sub, *b_ptr = prev, *c_ptr = prev_sub;
+        ptr != src_end;
+        ++ptr, ++a_ptr, ++b_ptr, ++c_ptr)
+        {
+            //PaethPredictor
+            int32_t p = *a_ptr + *b_ptr - *c_ptr;
+
+            int32_t pa = abs(p - (int32_t)*a_ptr);
+            int32_t pb = abs(p - (int32_t)*b_ptr);
+            int32_t pc = abs(p - (int32_t)*c_ptr);
+
+            if(pa <= pb && pa <= pc) *ptr = *ptr +  (uint8_t)*a_ptr;
+            else if(pb <= pc) *ptr = *ptr + (uint8_t)*b_ptr;
+            else *ptr = *ptr + (uint8_t)*c_ptr;
+        }
+    
+    free(sub);
+    free(prev);
+    free(prev_sub);
+    if(prev_src == NULL) free(prev_sub_prev);
+}
 
 //publics
 
@@ -236,6 +334,14 @@ png_filter_proc Png_filters[FILTERS_CNT] = {
     [FILTER_UP] = png_filter_up,
     [FILTER_AVERAGE] = png_filter_average,
     [FILTER_PEATH] = png_filter_peath,
+};
+
+png_filter_proc Png_reverse_filters[FILTERS_CNT] = {
+    [FILTER_NONE] = png_filter_none,
+    [FILTER_SUB] = png_reverse_filter_sub,
+    [FILTER_UP] = png_reverse_filter_up,
+    [FILTER_AVERAGE] = png_reverse_filter_average,
+    [FILTER_PEATH] = png_reverse_filter_peath,
 };
 
 bool png_foreach_chunk(void *src, uint32_t src_size, void (*on_png_chunk)(const png_chunk_t *chunk, void *user_params), void *user_params)

@@ -57,5 +57,6 @@ struct __IHDR_CONTENT
 };
 
 extern png_filter_proc Png_filters[FILTERS_CNT];
+extern png_filter_proc Png_reverse_filters[FILTERS_CNT];
 
 #endif
