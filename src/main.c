@@ -8,11 +8,20 @@ uint8_t *get_file_data(const char *file_name, int32_t *size);
 
 void proc_chunk(const png_chunk_t *chunk, void *params)
 {
-    static IHDR_content content;
+    static IHDR_content hdr;
+    static int32_t **imgData;
 
-    png_translate_IHDR(chunk, &content);
+    png_translate_IHDR(chunk, &hdr);
 
-    printf("%i\n", chunk->chunk_type);
+    if(imgData == NULL){
+        imgData = (int32_t**)malloc(hdr.width * hdr.height + hdr.height);
+        for(int i = 0; i < hdr.height; i++) 
+            imgData[i] = (int32_t*)(((uint8_t*)imgData) + hdr.height + i * hdr.width);
+    }
+
+    
+
+    
 }
 
 int main(int argc, char* argv[])

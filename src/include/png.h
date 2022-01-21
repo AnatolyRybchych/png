@@ -5,9 +5,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct __PNG_CHUNK_T png_chunk_t;
 typedef struct __IHDR_CONTENT IHDR_content;
+typedef void (*png_filter_proc)(void *src, void *prev_src, uint32_t src_size, uint8_t bpp);
 
 //src -> png data with header in the start
 //returns false if src has no png header
@@ -34,6 +36,16 @@ enum PNG_CHUNK_TYPES
     CHUNK_TYPES_CNT,        
 };
 
+enum PNG_FILTER_TYPES
+{
+    FILTER_NONE = 0,
+    FILTER_SUB = 1,
+    FILTER_UP = 2,
+    FILTER_AVERAGE = 3,
+    FILTER_PEATH = 4,
+    FILTERS_CNT,
+};
+
 struct __IHDR_CONTENT
 {
     uint32_t width;
@@ -43,5 +55,7 @@ struct __IHDR_CONTENT
     uint8_t compression_method;
     uint8_t filter_method;
 };
+
+extern png_filter_proc Png_filters[FILTERS_CNT];
 
 #endif
