@@ -33,6 +33,24 @@ static chunk_type ChunkTypes[CHUNK_TYPES_CNT] = {
     [IDAT].bytes = {'I', 'D', 'A', 'T'},
     [IEND].bytes = {'I', 'E', 'N', 'D'},
     [PLTE].bytes = {'P', 'L', 'T', 'E'},
+    
+    [bKGD].bytes = {'b', 'K', 'G', 'D'},
+    [cHRM].bytes = {'c', 'H', 'R', 'M'},
+    [dSIG].bytes = {'d', 'S', 'I', 'G'},
+    [eXIf].bytes = {'e', 'X', 'I', 'F'},
+    [gAMA].bytes = {'g', 'A', 'M', 'A'},
+    [hIST].bytes = {'h', 'I', 'S', 'T'},
+    [iCCP].bytes = {'i', 'C', 'C', 'P'},
+    [iTXt].bytes = {'i', 'T', 'X', 't'},
+    [pHYs].bytes = {'p', 'H', 'Y', 's'},
+    [sBIT].bytes = {'s', 'B', 'I', 'T'},
+    [sPLT].bytes = {'s', 'P', 'L', 'T'},
+    [sRGB].bytes = {'s', 'R', 'G', 'B'},
+    [sTER].bytes = {'s', 'T', 'E', 'R'},
+    [tEXt].bytes = {'t', 'E', 'X', 't'},
+    [tIME].bytes = {'t', 'S', 'M', 'E'},
+    [tRNS].bytes = {'t', 'R', 'N', 'S'},
+    [zTXt].bytes = {'z', 'T', 'X', 't'},
 };
 
 

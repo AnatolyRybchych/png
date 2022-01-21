@@ -37,7 +37,60 @@ enum PNG_CHUNK_TYPES
     IEND,
     IDAT,
     PLTE,
-    CHUNK_TYPES_CNT,        
+
+    bKGD,//gives the default background color. It is intended for use when there is no better choice available,
+        //such as in standalone image viewers (but not web browsers; see below for more details).
+
+    cHRM,//gives the chromaticity coordinates of the display primaries and white point.
+
+    dSIG,//is for storing digital signatures.
+
+    eXIf,//stores Exif metadata
+
+    gAMA,//specifies gamma. The gAMA chunk contains only 4 bytes, 
+        //and its value represents the gamma value multiplied by 100,000; 
+        //for example, the gamma value 1/3.4 calculates to 29411.7647059 ((1/3.4)*(100,000)) 
+        //and is converted to an integer (29412) for storage.
+
+    hIST,//can store the histogram, or total amount of each color in the image
+
+    iCCP,//is an ICC color profile
+
+    iTXt,//contains a keyword and UTF-8 text,
+        //with encodings for possible compression and translations marked with language tag. 
+        //The Extensible Metadata Platform (XMP) uses this chunk with a keyword 'XML:com.adobe.xmp'
+
+    pHYs,//holds the intended pixel size (or pixel aspect ratio); 
+        //the pHYs contains "Pixels per unit, X axis" (4 bytes), "Pixels per unit, Y axis" (4 bytes), 
+        //and "Unit specifier" (1 byte) for a total of 9 bytes.
+
+    sBIT,//(significant bits) indicates the color-accuracy of the source data;
+        //this chunk contains a total of between 1 and 13 bytes.
+
+    sPLT,//suggests a palette to use if the full range of colors is unavailable.
+
+    sRGB,//indicates that the standard sRGB color space is used; 
+        //the sRGB chunk contains only 1 byte, which is used for 
+        //"rendering intent" (4 values—0, 1, 2, and 3—are defined for rendering intent).
+
+    sTER,//stereo-image indicator chunk for stereoscopic images.
+
+    tEXt,//can store text that can be represented in ISO/IEC 8859-1, 
+        //with one key-value pair for each chunk. The "key" must be between 1 and 79 characters long. 
+        //Separator is a null character. The "value" can be any length, 
+        //including zero up to the maximum permissible chunk size minus the length of the keyword and separator. 
+        //Neither "key" nor "value" can contain null character. Leading or trailing spaces are also disallowed.
+
+    tIME,//stores the time that the image was last changed.
+
+    tRNS,//contains transparency information. For indexed images, 
+        //it stores alpha channel values for one or more palette entries. 
+        //For truecolor and grayscale images, 
+        //it stores a single pixel value that is to be regarded as fully transparent.
+
+    zTXt,//contains compressed text (and a compression method marker) with the same limits as tEXt.
+
+    CHUNK_TYPES_CNT,
 };
 
 enum PNG_FILTER_TYPES
