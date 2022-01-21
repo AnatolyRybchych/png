@@ -19,6 +19,10 @@ bool png_foreach_chunk(void *src, uint32_t src_size, void (*on_png_chunk)(const 
 //returns false ifchunk type is not IHDR 
 bool png_translate_IHDR(const png_chunk_t *chunk, IHDR_content *result);
 
+//returns false if not
+//returns false if type/depth has broken value
+bool png_is_color_type_accepts_depth(uint8_t color_type, uint8_t depth);
+
 struct __PNG_CHUNK_T
 {
     uint32_t lengh;       // bytes count of data, can be 0
@@ -44,6 +48,20 @@ enum PNG_FILTER_TYPES
     FILTER_AVERAGE = 3,
     FILTER_PEATH = 4,
     FILTERS_CNT,
+};
+
+enum PNG_COLOR_TYPES
+{
+    COLOR_GRAY_FLAG = 0,
+    COLOR_USER_PLTE_FLAG = 1,
+    COLOR_RGB_FLAG = 2,
+    COLOR_ALPHA_FLAG = 4,
+
+    COLOR_GRAY_SCALE = COLOR_GRAY_FLAG,
+    COLOR_RGB_TRIPLE = COLOR_RGB_FLAG,
+    COLOR_PLTE = COLOR_USER_PLTE_FLAG | COLOR_RGB_FLAG,
+    COLOR_ALPHA_GRAYSCALE = COLOR_GRAY_FLAG | COLOR_ALPHA_FLAG,
+    COLOR_ALPHA_RGB_TRIPLE = COLOR_RGB_FLAG | COLOR_ALPHA_FLAG,
 };
 
 struct __IHDR_CONTENT

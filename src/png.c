@@ -123,6 +123,9 @@ static void free_chunk(const png_chunk_t *chunk)
     if (chunk->data) free(chunk->data);
 }
 
+//filter functions/////////////////////////////////////////////
+//filter functions shuold be called for each line of data bytes
+
 static void png_filter_none(void *src, void *prev_src, uint32_t src_size, uint8_t bpp)
 {
     return;
@@ -326,6 +329,9 @@ static void png_reverse_filter_peath(void *src, void *prev_src, uint32_t src_siz
     if(prev_src == NULL) free(prev_sub_prev);
 }
 
+//filter functions end/////////////////////////////////////////
+
+
 //publics
 
 png_filter_proc Png_filters[FILTERS_CNT] = {
@@ -392,3 +398,23 @@ bool png_translate_IHDR(const png_chunk_t *chunk, IHDR_content *result)
 
     return true;
 }
+
+bool png_is_color_type_accepts_depth(uint8_t color_type, uint8_t depth)
+{
+    switch (color_type)
+    {
+    case COLOR_GRAY_SCALE:
+        return depth == 1 || depth == 2 || depth == 4 || depth == 8 || depth == 16;
+    case COLOR_RGB_TRIPLE:
+        return depth == 8 || depth == 16;
+    case COLOR_USER_PLTE_FLAG:
+        return depth == 1 || depth == 2 || depth == 4 || depth == 8;
+    case COLOR_ALPHA_RGB_TRIPLE:
+        return depth == 8 || depth == 16;
+    case COLOR_ALPHA_GRAYSCALE:
+        return depth == 8 || depth == 16;
+    default:
+        return false;
+    }
+}
+
