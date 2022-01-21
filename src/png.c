@@ -94,7 +94,7 @@ static bool read_chunk(uint8_t *src, png_chunk_t *dst, uint32_t bytes_to_buffer_
     for(int i = 0; i < sizeof(len); i++, src_off++)
         len.bytes[sizeof(len) - i - 1] = *(src + src_off);
     len.val = len.val;
-    if(len.val > bytes_to_buffer_end - PNG_CHUNK_NO_DATA_SIZE) len.val = 0;
+    if(len.val > bytes_to_buffer_end - PNG_CHUNK_NO_DATA_SIZE) return false;
     res.lengh = len.val;
 
     //chunk type
