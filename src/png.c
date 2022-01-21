@@ -6,11 +6,15 @@
 #define PNG_CHUNK_NO_DATA_SIZE 12
 #define CHUNK_TYPE_SIZE 4
 
+#define IHDR_WIDTH_OFFSET 4
+#define IHDR_HEIGHT_OFFSET 0
+#define IHDR_SIZE_END_OFFSET 8
+
 typedef union
 {
     uint8_t bytes[CHUNK_TYPE_SIZE];
     uint32_t val;
-} chunk_type, chunk_data_len, chunk_CRC;
+} chunk_type, chunk_data_len, chunk_CRC, IHDR_width, IHDR_height;
 
 //return true if first 8 bytes of data == png_file_header
 static bool has_png_file_header(const uint8_t *data);
@@ -141,6 +145,33 @@ bool png_foreach_chunk(void *src, uint32_t src_size, void (*on_png_chunk)(const 
         data_ptr += chunk.lengh + PNG_CHUNK_NO_DATA_SIZE;
         to_end = src_size - (data_ptr - (uint8_t*)src);
     } 
+
+    return true;
+}
+
+bool png_translate_IHDR(const png_chunk_t *chunk, IHDR_content *result)
+{
+    if(chunk->chunk_type != IHDR) return false;
+    
+    IHDR_width width;
+    IHDR_height height;
+
+    width.bytes[3] = chunk->data[IHDR_WIDTH_OFFSET + 0];
+    width.bytes[2] = chunk->data[IHDR_WIDTH_OFFSET + 1];
+    width.bytes[1] = chunk->data[IHDR_WIDTH_OFFSET + 2];
+    width.bytes[0] = chunk->data[IHDR_WIDTH_OFFSET + 3];
+    result->width = width.val;
+
+    height.bytes[3] = chunk->data[IHDR_HEIGHT_OFFSET + 0];
+    height.bytes[2] = chunk->data[IHDR_HEIGHT_OFFSET + 1];
+    height.bytes[1] = chunk->data[IHDR_HEIGHT_OFFSET + 2];
+    height.bytes[0] = chunk->data[IHDR_HEIGHT_OFFSET + 3];
+    result->height = height.val;
+
+    result->bit_depth = chunk->data[IHDR_SIZE_END_OFFSET + 0];
+    result->color_type = chunk->data[IHDR_SIZE_END_OFFSET + 1];
+    result->compression_method = chunk->data[IHDR_SIZE_END_OFFSET + 2];
+    result->filter_method = chunk->data[IHDR_SIZE_END_OFFSET + 3];
 
     return true;
 }

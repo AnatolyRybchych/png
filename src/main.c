@@ -8,10 +8,22 @@ uint8_t *get_file_data(const char *file_name, int32_t *size);
 
 void proc_chunk(const png_chunk_t *chunk, void *params)
 {
-    printf("\nchunk{\n");
-    printf("\ttype: %i\n", chunk->chunk_type);
-    printf("\tdata lenght: %u\n", chunk->lengh);
-    printf("}\n");
+    if(chunk->chunk_type == IHDR)
+    {
+        IHDR_content content;
+        png_translate_IHDR(chunk, &content);
+        printf("IHDR\n");
+        printf("w: %u\n", content.width);
+        printf("h: %u\n\n", content.height);
+
+    }
+    else
+    {
+        printf("\nchunk{\n");
+        printf("\ttype: %i\n", chunk->chunk_type);
+        printf("\tdata lenght: %u\n", chunk->lengh);
+        printf("}\n");
+    }
 }
 
 int main(int argc, char* argv[])
