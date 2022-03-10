@@ -436,3 +436,266 @@ bool png_is_color_type_accepts_depth(uint8_t color_type, uint8_t depth)
     }
 }
 
+//context for inflate
+struct context {
+	const unsigned char *src;
+	unsigned int srclen;
+	unsigned char *dst;
+	unsigned int dstlen;
+	unsigned int tag;
+	unsigned int bitcnt;
+};
+
+static int debit(struct context *ud, unsigned int *result)
+{
+	unsigned int bit;
+
+	/* check if tag is empty */
+	if (!ud->bitcnt--) {
+		if (!ud->srclen--) {
+			return 0;
+		}
+
+		/* load next tag */
+		ud->tag = *ud->src++;
+		ud->bitcnt = 7;
+	}
+
+	/* shift bit out of tag */
+	bit = (ud->tag >> 7) & 0x01;
+	ud->tag <<= 1;
+
+	*result = bit;
+
+	return 1;
+}
+
+static int get_gamma(struct context *ud, unsigned int *result)
+{
+	unsigned int bit;
+	unsigned int v = 1;
+
+	/* input gamma2-encoded bits */
+	do {
+		if (!debit(ud, &bit)) {
+			return 0;
+		}
+
+		if (v & 0x80000000) {
+			return 0;
+		}
+
+		v = (v << 1) + bit;
+
+		if (!debit(ud, &bit)) {
+			return 0;
+		}
+	} while (bit);
+
+	*result = v;
+
+	return 1;
+}
+
+bool inflate(const void *src, unsigned int srclen, void *dst, unsigned int dstlen)
+{
+	struct context ud;
+	unsigned int offs, len, R0, LWM, bit;
+	int done;
+	int i;
+
+	if (!src || !dst) {
+		return false;
+	}
+
+	ud.src = (const unsigned char *) src;
+	ud.srclen = srclen;
+	ud.dst = (unsigned char *) dst;
+	ud.dstlen = dstlen;
+	ud.bitcnt = 0;
+
+	R0 = (unsigned int) -1;
+	LWM = 0;
+	done = 0;
+
+	/* first byte verbatim */
+	if (!ud.srclen-- || !ud.dstlen--) {
+		return false;
+	}
+	*ud.dst++ = *ud.src++;
+
+	/* main decompression loop */
+	while (!done) {
+		if (!debit(&ud, &bit)) {
+			return false;
+		}
+
+		if (bit) {
+			if (!debit(&ud, &bit)) {
+				return false;
+			}
+
+			if (bit) {
+				if (!debit(&ud, &bit)) {
+					return false;
+				}
+
+				if (bit) {
+					offs = 0;
+
+					for (i = 4; i; i--) {
+						if (!debit(&ud, &bit)) {
+							return false;
+						}
+						offs = (offs << 1) + bit;
+					}
+
+					if (offs) {
+						if (offs > (dstlen - ud.dstlen)) {
+							return false;
+						}
+
+						if (!ud.dstlen--) {
+							return false;
+						}
+
+						*ud.dst = *(ud.dst - offs);
+						ud.dst++;
+					}
+					else {
+						if (!ud.dstlen--) {
+							return false;
+						}
+
+						*ud.dst++ = 0x00;
+					}
+
+					LWM = 0;
+				}
+				else {
+					if (!ud.srclen--) {
+						return false;
+					}
+
+					offs = *ud.src++;
+
+					len = 2 + (offs & 0x0001);
+
+					offs >>= 1;
+
+					if (offs) {
+						if (offs > (dstlen - ud.dstlen)) {
+							return false;
+						}
+
+						if (len > ud.dstlen) {
+							return false;
+						}
+
+						ud.dstlen -= len;
+
+						for (; len; len--) {
+							*ud.dst = *(ud.dst - offs);
+							ud.dst++;
+						}
+					}
+					else {
+						done = 1;
+					}
+
+					R0 = offs;
+					LWM = 1;
+				}
+			}
+			else {
+				if (!get_gamma(&ud, &offs)) {
+					return false;
+				}
+
+				if ((LWM == 0) && (offs == 2)) {
+					offs = R0;
+
+					if (!get_gamma(&ud, &len)) {
+						return false;
+					}
+
+					if (offs > (dstlen - ud.dstlen)) {
+						return false;
+					}
+
+					if (len > ud.dstlen) {
+						return false;
+					}
+
+					ud.dstlen -= len;
+
+					for (; len; len--) {
+						*ud.dst = *(ud.dst - offs);
+						ud.dst++;
+					}
+				}
+				else {
+					if (LWM == 0) {
+						offs -= 3;
+					}
+					else {
+						offs -= 2;
+					}
+
+					if (offs > 0x00fffffe) {
+						return false;
+					}
+
+					if (!ud.srclen--) {
+						return false;
+					}
+
+					offs <<= 8;
+					offs += *ud.src++;
+
+					if (!get_gamma(&ud, &len)) {
+						return false;
+					}
+
+					if (offs >= 32000) {
+						len++;
+					}
+					if (offs >= 1280) {
+						len++;
+					}
+					if (offs < 128) {
+						len += 2;
+					}
+
+					if (offs > (dstlen - ud.dstlen)) {
+						return false;
+					}
+
+					if (len > ud.dstlen) {
+						return false;
+					}
+
+					ud.dstlen -= len;
+
+					for (; len; len--) {
+						*ud.dst = *(ud.dst - offs);
+						ud.dst++;
+					}
+
+					R0 = offs;
+				}
+
+				LWM = 1;
+			}
+		}
+		else {
+			if (!ud.srclen-- || !ud.dstlen--) {
+				return false;
+			}
+			*ud.dst++ = *ud.src++;
+			LWM = 0;
+		}
+	}
+
+	return true;
+}

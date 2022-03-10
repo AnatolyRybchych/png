@@ -23,6 +23,9 @@ bool png_translate_IHDR(const png_chunk_t *chunk, IHDR_content *result);
 //returns false if type/depth has broken value
 bool png_is_color_type_accepts_depth(uint8_t color_type, uint8_t depth);
 
+
+bool inflate(const void *src, unsigned int srclen, void *dst, unsigned int dstlen);
+
 struct __PNG_CHUNK_T
 {
     uint32_t lengh;       // bytes count of data, can be 0
